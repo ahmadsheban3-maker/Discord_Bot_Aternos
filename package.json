@@ -1,7 +1,6 @@
 {
-  "name": "aternos-discord-bot",
+  "name": "aternos-bot",
   "version": "1.0.0",
-  "description": "24/7 Aternos Monitor",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
