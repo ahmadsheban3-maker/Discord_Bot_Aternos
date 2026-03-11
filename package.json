@@ -1,0 +1,13 @@
+{
+  "name": "aternos-discord-bot",
+  "version": "1.0.0",
+  "description": "24/7 Aternos Monitor",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "minecraft-server-util": "^6.0.2"
+  }
+}
