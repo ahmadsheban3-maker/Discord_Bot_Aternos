@@ -20,19 +20,14 @@ server = JavaServer(SERVER_IP, SERVER_PORT)
 # When bot starts
 @bot.event
 async def on_ready():
+    activity = discord.CustomActivity(name="play.block.ooguy.com | /status")
+    
     await bot.change_presence(
-        activity=discord.Activity(
-            type=discord.ActivityType.watching,
-            name=f"{SERVER_IP}"
-        )
+        status=discord.Status.idle,
+        activity=activity
     )
 
-    try:
-        synced = await bot.tree.sync()
-        print(f"Synced {len(synced)} commands")
-    except Exception as e:
-        print(e)
-
+    await bot.tree.sync()
     print(f"Logged in as {bot.user}")
 
 
