@@ -41,7 +41,7 @@ client.once('ready', async () => {
                     name: `🟢 ${status.players.online}/${status.players.max} Players`, 
                     type: ActivityType.Custom 
                 }],
-                status: PresenceUpdateStatus.Online, 
+                status: PresenceUpdateStatus.Idle, 
             });
         } catch {
             client.user.setPresence({
