@@ -1,58 +1,85 @@
-import os
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import app_commands
 from mcstatus import JavaServer
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
-SERVER_IP = os.getenv("SERVER_IP")
-SERVER_PORT = int(os.getenv("SERVER_PORT"))
+SERVER_ADDRESS = os.getenv("SERVER_ADDRESS")
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Connect to Minecraft server
-server = JavaServer(SERVER_IP, SERVER_PORT)
+server = JavaServer.lookup(SERVER_ADDRESS)
 
-# When bot starts
+# ---------------------------
+# BOT READY
+# ---------------------------
+
 @bot.event
 async def on_ready():
-    activity = discord.CustomActivity(name="play.block.ooguy.com | /status")
-    
-    await bot.change_presence(
-        status=discord.Status.idle,
-        activity=activity
-    )
-
     await bot.tree.sync()
-    print(f"Logged in as {bot.user}")
+    update_status.start()
+    print(f"Bot Online: {bot.user}")
 
+# ---------------------------
+# AUTO STATUS UPDATE
+# ---------------------------
 
-# -----------------------
-# /server command
-# -----------------------
-@bot.tree.command(name="server", description="Show Minecraft server IP and port")
+@tasks.loop(seconds=30)
+async def update_status():
+    try:
+        status = server.status()
+        players = status.players.idle
+
+        activity = discord.CustomActivity(
+            name=f"🟢 {players} Players"
+        )
+
+        await bot.change_presence(
+            status=discord.Status.online,
+            activity=activity
+        )
+
+    except:
+        activity = discord.CustomActivity(
+            name="🔴 Server Offline"
+        )
+
+        await bot.change_presence(
+            status=discord.Status.dnd,
+            activity=activity
+        )
+
+# ---------------------------
+# /server COMMAND
+# ---------------------------
+
+@bot.tree.command(name="server", description="Show Minecraft server IP")
 async def server_info(interaction: discord.Interaction):
+
+    ip, port = SERVER_ADDRESS.split(":")
 
     embed = discord.Embed(
         title="🌍 Minecraft Server",
-        color=discord.Color.green()
+        color=0x2ecc71
     )
 
-    embed.add_field(name="IP", value=SERVER_IP, inline=True)
-    embed.add_field(name="Port", value=SERVER_PORT, inline=True)
+    embed.add_field(name="IP", value=ip, inline=True)
+    embed.add_field(name="Port", value=port, inline=True)
+
     embed.set_footer(text="Hosted on Aternos")
 
     await interaction.response.send_message(embed=embed)
 
+# ---------------------------
+# /status COMMAND
+# ---------------------------
 
-# -----------------------
-# /status command
-# -----------------------
-@bot.tree.command(name="status", description="Check server status and TPS")
+@bot.tree.command(name="status", description="Check server status")
 async def status(interaction: discord.Interaction):
 
     try:
@@ -60,26 +87,27 @@ async def status(interaction: discord.Interaction):
 
         players = f"{status.players.online}/{status.players.max}"
         latency = round(status.latency)
+        motd = status.description
+        version = status.version.name
 
         embed = discord.Embed(
             title="🟢 Server Online",
-            color=discord.Color.green()
+            color=0x2ecc71
         )
 
-        embed.add_field(name="Players", value=players, inline=True)
-        embed.add_field(name="Ping", value=f"{latency} ms", inline=True)
-        embed.add_field(name="TPS", value="~20 (Estimated)", inline=True)
-
-        embed.set_footer(text="Minecraft Server Status")
+        embed.add_field(name="👥 Players", value=players, inline=True)
+        embed.add_field(name="🏓 Ping", value=f"{latency} ms", inline=True)
+        embed.add_field(name="🧩 Version", value=version, inline=True)
+        embed.add_field(name="📜 MOTD", value=motd, inline=False)
 
     except:
+
         embed = discord.Embed(
             title="🔴 Server Offline",
-            description="The Minecraft server is currently offline.",
-            color=discord.Color.red()
+            description="The server is currently offline.",
+            color=0xe74c3c
         )
 
     await interaction.response.send_message(embed=embed)
-
 
 bot.run(TOKEN)
